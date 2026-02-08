@@ -32,9 +32,9 @@ Para cumplir con el objetivo, se desarrolló una interfaz web basada en una estr
 
 **Detalles técnicos de la implementación:**
 
-1.  **Integración de WebGazer:** Se configuró el script de seguimiento para superponer una malla de calibración de 9 puntos y recolectar las coordenadas (x,y) de la mirada en tiempo real, almacenando los datos localmente.
-2.  **Jerarquía Visual:** Se ubicaron el logotipo y el título en el cuadrante superior izquierdo, aprovechando el patrón de lectura occidental.
-3.  **Elemento de Conversión (CTA):** Se implementó un botón "Reservar Ahora" con alto contraste (Rojo #e63946 sobre fondo frío) para maximizar la saliencia visual.
+1. Se configuró el script de seguimiento para superponer una malla de calibración de 9 puntos y recolectar las coordenadas (x,y) de la mirada en tiempo real, almacenando los datos localmente.
+2. Se ubicaron el logotipo y el título en el cuadrante superior izquierdo.
+3. Se implementó un botón "Reservar Ahora" con alto contraste para maximizar la saliencia visual.
 
 Código CSS implementado para el botón CTA:
 
@@ -59,7 +59,6 @@ Código CSS implementado para el botón CTA:
 ---
 
 **Análisis de las zonas de atención visual observadas**
-Tras la ejecución de las pruebas y el procesamiento del mapa de calor resultante, se extrajeron los siguientes datos de comportamiento:
 
 - La mayor densidad del heatmap se concentró en el título principal. Esto confirma que el usuario busca contextualizar el sitio inmediatamente al ingresar (primeros 7.5 segundos).
 
