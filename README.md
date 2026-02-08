@@ -56,6 +56,40 @@ Código CSS implementado para el botón CTA:
 }
 ```
 
+Para la captura de datos oculares se utilizó la librería WebGazer.js. La implementación se realizó mediante un script asíncrono que inicializa un "GazeListener". Este listener captura las coordenadas $(x, y)$ de la mirada del usuario en cada frame y las almacena en un arreglo local para su posterior procesamiento. Se configuró una regresión tipo 'ridge' para mejorar la precisión tras la calibración de 9 puntos.
+
+```
+// Inicialización y almacenamiento de coordenadas
+webgazer.setGazeListener(function(data, elapsedTime) {
+    if (data == null) { return; }
+    
+    // Se guardan las coordenadas (x, y) y el tiempo
+    gazeData.push({
+        x: data.x, 
+        y: data.y, 
+        value: 1 // Intensidad base para el mapa de calor
+    });
+}).begin();
+```
+
+Para la visualización, se integró Heatmap.js. Se creó una capa canvas superpuesta al body del documento (z-index superior) que ignora los eventos del puntero para no interferir con la navegación. Al finalizar la sesión de prueba, los datos recolectados en el arreglo gazeData se inyectan en la instancia del mapa de calor, renderizando zonas rojas donde la densidad de puntos (miradas) es mayor.
+
+```
+// Configuración de la instancia del Heatmap
+var heatmapInstance = h337.create({
+    container: document.querySelector('.heatmap-overlay'),
+    radius: 40,      // Radio de influencia de cada punto
+    maxOpacity: 0.6,
+    blur: 0.75
+});
+
+// Inyección de datos recolectados
+heatmapInstance.setData({
+    max: 10,       // Umbral para color rojo intenso
+    data: gazeData
+});
+```
+
 ---
 
 **Análisis de las zonas de atención visual observadas**
