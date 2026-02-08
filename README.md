@@ -1,9 +1,15 @@
 **Universidad:** Universidad Particular Internacional SEK
+
 **Carrera:** Ingeniería de Software Online
+
 **Asignatura:** Interacción Persona Computador  
+
 **Período:** 2026-1
+
 **Nombre:** Diego Rafael Andrade Gutiérrez
+
 **Fecha de entrega:** 8 de febrero de 2026  
+
 **Tarea:** Laboratorio 5
 
 Evidencia de la calibración y del Heatmap estático generado:
