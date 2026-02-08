@@ -59,15 +59,20 @@ Código CSS implementado para el botón CTA:
 Para la captura de datos oculares se utilizó la librería WebGazer.js. La implementación se realizó mediante un script asíncrono que inicializa un "GazeListener". Este listener captura las coordenadas $(x, y)$ de la mirada del usuario en cada frame y las almacena en un arreglo local para su posterior procesamiento. Se configuró una regresión tipo 'ridge' para mejorar la precisión tras la calibración de 9 puntos.
 
 ```
-// Inicialización y almacenamiento de coordenadas
+// Lógica de captura en el GazeListener
 webgazer.setGazeListener(function(data, elapsedTime) {
     if (data == null) { return; }
     
-    // Se guardan las coordenadas (x, y) y el tiempo
+    // Almacenamiento de puntos para el heatmap
+    // Se normalizan las coordenadas para evitar desbordes
+    var xprediction = data.x;
+    var yprediction = data.y;
+    
+    // Push al arreglo de datos brutos
     gazeData.push({
-        x: data.x, 
-        y: data.y, 
-        value: 1 // Intensidad base para el mapa de calor
+        x: Math.floor(xprediction), 
+        y: Math.floor(yprediction), 
+        value: 1 // Peso base de cada fijación
     });
 }).begin();
 ```
@@ -75,19 +80,21 @@ webgazer.setGazeListener(function(data, elapsedTime) {
 Para la visualización, se integró Heatmap.js. Se creó una capa canvas superpuesta al body del documento (z-index superior) que ignora los eventos del puntero para no interferir con la navegación. Al finalizar la sesión de prueba, los datos recolectados en el arreglo gazeData se inyectan en la instancia del mapa de calor, renderizando zonas rojas donde la densidad de puntos (miradas) es mayor.
 
 ```
-// Configuración de la instancia del Heatmap
+// Configuración de la instancia de renderizado
 var heatmapInstance = h337.create({
     container: document.querySelector('.heatmap-overlay'),
-    radius: 40,      // Radio de influencia de cada punto
-    maxOpacity: 0.6,
-    blur: 0.75
+    radius: 50,       // Radio de influencia de cada punto (fijación)
+    maxOpacity: 0.6,  // Transparencia para ver el contenido debajo
+    blur: 0.85        // Suavizado del gradiente
 });
 
-// Inyección de datos recolectados
-heatmapInstance.setData({
-    max: 10,       // Umbral para color rojo intenso
-    data: gazeData
-});
+// Renderizado final con los datos recolectados
+function generateHeatmap() {
+    heatmapInstance.setData({
+        max: 15,      // Umbral de intensidad para el color rojo (puntos calientes)
+        data: gazeData
+    });
+}
 ```
 
 ---
