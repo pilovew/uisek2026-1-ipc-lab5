@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoTravel - Turismo Sostenible | Eye-Tracking Demo</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://webgazer.cs.brown.edu/webgazer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heatmap.js@2.0.5/build/heatmap.min.js"></script>
+</head>
+<body>
+    <!-- Control Panel -->
+    <div id="control-panel">
+        <h3>🔬 Panel de Control Eye-Tracking</h3>
+        <button id="start-calibration" class="control-btn">Iniciar Calibración</button>
+        <button id="start-task" class="control-btn" disabled>Comenzar Tarea</button>
+        <button id="show-heatmap" class="control-btn" disabled>Mostrar Mapa de Calor</button>
+        <button id="reset" class="control-btn">Reiniciar</button>
+        <div id="status">Estado: Listo para calibrar</div>
+        <div id="timer">Tiempo: 0s</div>
+        <div id="task-description" style="display:none;">
+            <strong>📋 TAREA:</strong> Encuentra el botón "Reservar Ahora" y haz clic en él
+        </div>
+    </div>
+
+    <!-- Main Website Content -->
+    <div id="website-container">
+        <!-- Header -->
+        <header class="hero-header">
+            <nav class="navbar">
+                <div class="logo">
+                    <span class="logo-icon">🌿</span>
+                    <span class="logo-text">EcoTravel</span>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="#destinos">Destinos</a></li>
+                    <li><a href="#tours">Tours</a></li>
+                    <li><a href="#nosotros">Nosotros</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
+                </ul>
+            </nav>
+            
+            <div class="hero-content">
+                <h1 class="hero-title">Descubre el Mundo de Forma Sostenible</h1>
+                <p class="hero-subtitle">Viajes que cuidan el planeta y transforman vidas</p>
+                <button class="cta-button" id="main-cta">Reservar Ahora</button>
+            </div>
+        </header>
+
+        <!-- Main Content Section -->
+        <main class="main-content">
+            <section class="features">
+                <h2 class="section-title">¿Por qué elegir EcoTravel?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🌍</div>
+                        <h3>Carbono Neutral</h3>
+                        <p>Todos nuestros tours compensan el 100% de emisiones de CO₂</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🏡</div>
+                        <h3>Comunidades Locales</h3>
+                        <p>Apoyamos directamente a las economías regionales</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌱</div>
+                        <h3>Impacto Positivo</h3>
+                        <p>Cada viaje contribuye a proyectos de conservación</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="destinations">
+                <h2 class="section-title">Destinos Populares</h2>
+                <div class="destinations-grid">
+                    <div class="destination-card">
+                        <div class="destination-image amazon"></div>
+                        <h3>Amazonas</h3>
+                        <p class="price">Desde $899</p>
+                    </div>
+                    <div class="destination-card">
+                        <div class="destination-image patagonia"></div>
+                        <h3>Patagonia</h3>
+                        <p class="price">Desde $1,299</p>
+                    </div>
+                    <div class="destination-card">
+                        <div class="destination-image galapagos"></div>
+                        <h3>Galápagos</h3>
+                        <p class="price">Desde $1,599</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 EcoTravel. Viajes con propósito.</p>
+            <div class="social-links">
+                <a href="#facebook">Facebook</a>
+                <a href="#instagram">Instagram</a>
+                <a href="#twitter">Twitter</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Heatmap Container -->
+    <div id="heatmap-container"></div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <h2>✅ ¡Tarea Completada!</h2>
+            <p>Has encontrado y clickeado el botón correctamente.</p>
+            <p>Ahora puedes visualizar el mapa de calor.</p>
+            <button id="close-modal" class="control-btn">Cerrar</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
