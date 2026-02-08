@@ -22,6 +22,7 @@ class EyeTrackingSystem {
         document.getElementById('start-calibration').addEventListener('click', () => this.startCalibration());
         document.getElementById('start-task').addEventListener('click', () => this.startTask());
         document.getElementById('show-heatmap').addEventListener('click', () => this.showHeatmap());
+        document.getElementById('test-webgazer').addEventListener('click', () => this.testWebGazer());
         document.getElementById('reset').addEventListener('click', () => this.reset());
         document.getElementById('close-modal').addEventListener('click', () => this.closeModal());
         
@@ -30,22 +31,38 @@ class EyeTrackingSystem {
     }
 
     initializeWebGazer() {
-        // Initialize WebGazer with optimized settings
-        webgazer.setGazeListener((data, elapsedTime) => {
-            if (data && this.isTracking) {
-                this.recordGazePoint(data.x, data.y);
-            }
-        }).begin();
+        console.log('🚀 Initializing WebGazer...');
+        
+        // Initialize WebGazer with error handling
+        try {
+            webgazer.setGazeListener((data, elapsedTime) => {
+                if (data == null || data.x == null || data.y == null) {
+                    return;
+                }
+                
+                if (this.isTracking) {
+                    this.recordGazePoint(data.x, data.y);
+                }
+            }).begin();
 
-        // Configure WebGazer
-        webgazer.showVideoPreview(true)
-                .showPredictionPoints(true)
-                .applyKalmanFilter(true); // Smooth predictions
+            // Configure WebGazer with better settings
+            webgazer.showVideoPreview(true)
+                    .showPredictionPoints(false) // Start with predictions off
+                    .applyKalmanFilter(true)
+                    .setRegression('ridge') // Use ridge regression for better accuracy
+                    .saveDataAcrossSessions(false);
 
-        // Pause initially
-        webgazer.pause();
-
-        this.updateStatus('Sistema inicializado. Haz clic en "Iniciar Calibración"');
+            // Important: Don't pause immediately, let it warm up
+            setTimeout(() => {
+                console.log('✅ WebGazer warmed up');
+                webgazer.pause(); // Now pause after initial setup
+                this.updateStatus('Sistema inicializado. Haz clic en "Iniciar Calibración"');
+            }, 2000);
+            
+        } catch (error) {
+            console.error('❌ Error initializing WebGazer:', error);
+            alert('Error al inicializar el sistema de eye-tracking. Recarga la página.');
+        }
     }
 
     async startCalibration() {
@@ -154,11 +171,17 @@ class EyeTrackingSystem {
                 event.preventDefault();
             }
             
-            // Update progress BEFORE incrementing
-            const progressText = document.getElementById('progress-text');
-            const progressBar = document.getElementById('progress-bar');
+            // Store current click position for WebGazer
+            const rect = pointElement.getBoundingClientRect();
+            const clickX = rect.left + rect.width / 2;
+            const clickY = rect.top + rect.height / 2;
             
-            // Give WebGazer time to register the click location
+            // Manually store calibration data
+            webgazer.recordScreenPosition(clickX, clickY, 'click');
+            
+            console.log(`📍 Registered calibration at (${Math.round(clickX)}, ${Math.round(clickY)})`);
+            
+            // Give WebGazer MORE time to register the click location
             setTimeout(() => {
                 currentPoint++;
                 
@@ -191,7 +214,7 @@ class EyeTrackingSystem {
                 
                 this.updateStatus(`Calibrando... Punto ${currentPoint + 1} de ${calibrationPoints.length}. HAZ CLICK en el punto rojo.`);
                 console.log(`→ Moving to point ${currentPoint + 1} at ${point.x}, ${point.y}`);
-            }, 300);
+            }, 500); // Increased from 300ms to 500ms
         };
 
         // Add click listener
@@ -237,10 +260,47 @@ class EyeTrackingSystem {
     }
 
     startTask() {
+        if (!this.isCalibrated) {
+            alert('⚠️ Primero debes completar la calibración');
+            return;
+        }
+        
+        console.log('🎬 Starting task...');
+        
+        // CRITICAL: Force WebGazer to resume
+        webgazer.resume();
+        
+        // Double-check it's running
+        setTimeout(() => {
+            if (!webgazer.isReady()) {
+                console.error('❌ WebGazer is not ready!');
+                webgazer.begin(); // Force restart
+            }
+        }, 500);
+        
         this.isTracking = true;
         this.taskStartTime = Date.now();
         this.gazeData = [];
         this.elapsedTime = 0;
+        
+        // Verify WebGazer is working after 2 seconds
+        setTimeout(() => {
+            console.log('🔍 Checking WebGazer status after 2 seconds...');
+            console.log('Is tracking:', this.isTracking);
+            console.log('Gaze data collected so far:', this.gazeData.length);
+            console.log('WebGazer ready:', webgazer.isReady());
+            
+            if (this.gazeData.length === 0) {
+                console.warn('⚠️ No gaze data being collected after 2 seconds!');
+                console.warn('Attempting to restart WebGazer...');
+                
+                // Try to fix it
+                webgazer.resume();
+                webgazer.showPredictionPoints(true);
+            } else {
+                console.log('✅ WebGazer is collecting data successfully!');
+            }
+        }, 2000);
         
         // Show task description
         document.getElementById('task-description').style.display = 'block';
@@ -252,8 +312,11 @@ class EyeTrackingSystem {
         // Start timer
         this.startTimer();
 
-        // Show prediction points
+        // Show prediction points (important for visual feedback)
         webgazer.showPredictionPoints(true);
+        
+        console.log('✅ Task started! WebGazer should be tracking now.');
+        console.log('👁️ Look around the page and you should see red prediction dots.');
     }
 
     startTimer() {
@@ -271,6 +334,11 @@ class EyeTrackingSystem {
     }
 
     recordGazePoint(x, y) {
+        // Validate coordinates
+        if (!x || !y || isNaN(x) || isNaN(y)) {
+            return;
+        }
+        
         // Record gaze point with timestamp
         this.gazeData.push({
             x: Math.round(x),
@@ -280,7 +348,12 @@ class EyeTrackingSystem {
 
         // Log data collection progress
         if (this.gazeData.length % 50 === 0) {
-            console.log(`Collected ${this.gazeData.length} gaze points`);
+            console.log(`📊 Collected ${this.gazeData.length} gaze points`);
+        }
+        
+        // Log first few points for debugging
+        if (this.gazeData.length <= 3) {
+            console.log(`👁️ Gaze point ${this.gazeData.length}: (${Math.round(x)}, ${Math.round(y)})`);
         }
     }
 
@@ -312,10 +385,89 @@ class EyeTrackingSystem {
         document.getElementById('success-modal').classList.remove('active');
     }
 
+    testWebGazer() {
+        console.log('🧪 Testing WebGazer...');
+        
+        // Resume WebGazer
+        webgazer.resume();
+        webgazer.showPredictionPoints(true);
+        
+        // Test data collection for 5 seconds
+        const testData = [];
+        const testStartTime = Date.now();
+        
+        const testListener = (data, elapsedTime) => {
+            if (data) {
+                testData.push({ x: data.x, y: data.y });
+            }
+        };
+        
+        // Temporarily add test listener
+        webgazer.setGazeListener(testListener);
+        
+        alert('🧪 PRUEBA DE WEBGAZER\n\n' +
+              'Durante los próximos 5 segundos:\n' +
+              '1. Mueve tus ojos por la pantalla\n' +
+              '2. Mira diferentes partes de la página\n' +
+              '3. Observa los puntos rojos que siguen tu mirada\n\n' +
+              'Presiona OK para comenzar');
+        
+        setTimeout(() => {
+            // Restore original listener
+            webgazer.setGazeListener((data, elapsedTime) => {
+                if (data && this.isTracking) {
+                    this.recordGazePoint(data.x, data.y);
+                }
+            });
+            
+            webgazer.showPredictionPoints(false);
+            webgazer.pause();
+            
+            console.log(`✅ Test complete! Collected ${testData.length} points in 5 seconds`);
+            
+            if (testData.length > 0) {
+                alert(`✅ WebGazer está funcionando!\n\n` +
+                      `Puntos recopilados: ${testData.length}\n` +
+                      `Promedio: ${(testData.length / 5).toFixed(1)} puntos/segundo\n\n` +
+                      `Ahora puedes comenzar la tarea con confianza.`);
+            } else {
+                alert(`❌ WebGazer NO está recopilando datos!\n\n` +
+                      `Posibles problemas:\n` +
+                      `- Tu rostro no está visible en la cámara\n` +
+                      `- Iluminación insuficiente\n` +
+                      `- La calibración no fue exitosa\n\n` +
+                      `Solución: Repite la calibración y asegúrate de que\n` +
+                      `tu cara esté bien visible en el video de abajo.`);
+            }
+        }, 5000);
+    }
+
     showHeatmap() {
+        console.log('🔥 Attempting to show heatmap...');
+        console.log('Gaze data points available:', this.gazeData.length);
+        
         if (this.gazeData.length === 0) {
-            alert('No hay datos de seguimiento visual disponibles.');
+            alert('❌ No hay datos de seguimiento visual disponibles.\n\n' +
+                  'Posibles causas:\n' +
+                  '1. WebGazer no detectó tu mirada durante la tarea\n' +
+                  '2. La cámara no tiene buena vista de tus ojos\n' +
+                  '3. La iluminación es insuficiente\n\n' +
+                  'Sugerencias:\n' +
+                  '- Asegúrate de que tu rostro esté bien visible en el video (esquina inferior izquierda)\n' +
+                  '- Mejora la iluminación de tu habitación\n' +
+                  '- Repite la calibración con más cuidado\n' +
+                  '- Mira la consola (F12) para más detalles');
+            console.error('⚠️ No gaze data recorded during task!');
             return;
+        }
+        
+        if (this.gazeData.length < 20) {
+            const proceed = confirm(`⚠️ Solo se registraron ${this.gazeData.length} puntos de mirada.\n\n` +
+                                  'Esto es muy poco para un mapa de calor útil.\n\n' +
+                                  '¿Deseas continuar de todos modos?');
+            if (!proceed) {
+                return;
+            }
         }
 
         this.updateStatus('📊 Generando mapa de calor...');
