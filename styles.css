@@ -24,6 +24,7 @@ body {
     z-index: 10000;
     max-width: 300px;
     border: 2px solid #4CAF50;
+    pointer-events: auto;
 }
 
 #control-panel h3 {
@@ -87,6 +88,27 @@ body {
     font-size: 13px;
     color: #1565C0;
     border-left: 4px solid #2196F3;
+}
+
+#calibration-progress {
+    margin-top: 15px;
+    padding: 12px;
+    background: #FFF3E0;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #E65100;
+}
+
+#calibration-progress strong {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+#progress-text {
+    color: #4CAF50;
+    font-weight: bold;
+    font-size: 14px;
 }
 
 /* Website Container */

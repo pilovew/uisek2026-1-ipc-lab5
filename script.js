@@ -49,16 +49,41 @@ class EyeTrackingSystem {
     }
 
     async startCalibration() {
-        this.updateStatus('Calibrando... Mira los puntos rojos que aparecen');
+        this.updateStatus('Preparando calibración...');
         
         // Resume WebGazer
         webgazer.resume();
         
         // Show calibration instructions
-        alert('CALIBRACIÓN:\n\n1. Mira directamente a cada punto rojo que aparezca\n2. Haz clic en cada punto\n3. Mantén la cabeza quieta\n4. La calibración mejorará con el tiempo\n\nHaz clic en OK para comenzar');
+        const proceed = confirm(
+            '🎯 CALIBRACIÓN DE SEGUIMIENTO OCULAR\n\n' +
+            'INSTRUCCIONES:\n' +
+            '1. Mantén la cabeza quieta y centrada\n' +
+            '2. Mira directamente cada punto rojo\n' +
+            '3. HAZ CLIC en cada punto mientras lo miras\n' +
+            '4. Aparecerán 9 puntos en total\n' +
+            '5. No te muevas durante la calibración\n\n' +
+            '¿Listo para comenzar?'
+        );
 
-        // Simple calibration - user should click around the screen
-        this.performCalibration();
+        if (!proceed) {
+            this.updateStatus('Calibración cancelada');
+            webgazer.pause();
+            return;
+        }
+
+        this.updateStatus('Calibrando... Espera el primer punto rojo');
+        
+        // Show progress indicator
+        const progressDiv = document.getElementById('calibration-progress');
+        if (progressDiv) {
+            progressDiv.style.display = 'block';
+        }
+        
+        // Wait a moment for WebGazer to stabilize
+        setTimeout(() => {
+            this.performCalibration();
+        }, 1000);
     }
 
     performCalibration() {
@@ -79,49 +104,136 @@ class EyeTrackingSystem {
         const pointElement = document.createElement('div');
         pointElement.style.cssText = `
             position: fixed;
-            width: 20px;
-            height: 20px;
+            width: 40px;
+            height: 40px;
             background: red;
             border-radius: 50%;
             cursor: pointer;
-            z-index: 99999;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+            z-index: 999999;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.9), 0 0 10px rgba(255, 255, 255, 0.8);
             animation: pulse 0.8s infinite;
+            border: 4px solid white;
+            pointer-events: auto;
         `;
+        
+        pointElement.id = 'calibration-point';
 
+        // Create overlay to prevent clicking other elements
+        const overlay = document.createElement('div');
+        overlay.id = 'calibration-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 999998;
+            pointer-events: auto;
+        `;
+        
         // Add pulse animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes pulse {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.3); }
-            }
-        `;
-        document.head.appendChild(style);
+        if (!document.getElementById('pulse-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'pulse-animation-style';
+            style.textContent = `
+                @keyframes pulse {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.3); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
 
-        const showNextPoint = () => {
-            if (currentPoint >= calibrationPoints.length) {
-                document.body.removeChild(pointElement);
-                this.completeCalibration();
-                return;
+        const showNextPoint = (event) => {
+            console.log(`✅ Calibration point ${currentPoint + 1} clicked at position ${pointElement.style.left}, ${pointElement.style.top}`);
+            
+            // Prevent event bubbling
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
             }
+            
+            // Update progress BEFORE incrementing
+            const progressText = document.getElementById('progress-text');
+            const progressBar = document.getElementById('progress-bar');
+            
+            // Give WebGazer time to register the click location
+            setTimeout(() => {
+                currentPoint++;
+                
+                if (currentPoint >= calibrationPoints.length) {
+                    console.log('🎉 All calibration points completed!');
+                    // Remove point, overlay and complete calibration
+                    if (pointElement.parentNode) {
+                        document.body.removeChild(pointElement);
+                    }
+                    const overlay = document.getElementById('calibration-overlay');
+                    if (overlay && overlay.parentNode) {
+                        document.body.removeChild(overlay);
+                    }
+                    this.completeCalibration();
+                    return;
+                }
 
-            const point = calibrationPoints[currentPoint];
-            pointElement.style.left = point.x;
-            pointElement.style.top = point.y;
-            currentPoint++;
+                // Update progress for next point
+                if (progressText) {
+                    progressText.textContent = `${currentPoint + 1}/9`;
+                }
+                if (progressBar) {
+                    progressBar.style.width = `${((currentPoint + 1) / 9 * 100)}%`;
+                }
+
+                // Show next point
+                const point = calibrationPoints[currentPoint];
+                pointElement.style.left = point.x;
+                pointElement.style.top = point.y;
+                
+                this.updateStatus(`Calibrando... Punto ${currentPoint + 1} de ${calibrationPoints.length}. HAZ CLICK en el punto rojo.`);
+                console.log(`→ Moving to point ${currentPoint + 1} at ${point.x}, ${point.y}`);
+            }, 300);
         };
 
+        // Add click listener
         pointElement.addEventListener('click', showNextPoint);
+        
+        // Add overlay and point to page
+        document.body.appendChild(overlay);
         document.body.appendChild(pointElement);
-        showNextPoint();
+        
+        // Show first point
+        const firstPoint = calibrationPoints[0];
+        pointElement.style.left = firstPoint.x;
+        pointElement.style.top = firstPoint.y;
+        
+        // Initialize progress display
+        const progressText = document.getElementById('progress-text');
+        const progressBar = document.getElementById('progress-bar');
+        if (progressText) {
+            progressText.textContent = `1/9`;
+        }
+        if (progressBar) {
+            progressBar.style.width = `${(1 / 9 * 100)}%`;
+        }
+        
+        this.updateStatus(`Calibrando... Punto 1 de ${calibrationPoints.length}. HAZ CLICK en el punto rojo.`);
+        console.log('Calibration started. Click the red dots.');
     }
 
     completeCalibration() {
         this.isCalibrated = true;
+        
+        // Hide progress indicator
+        const progressDiv = document.getElementById('calibration-progress');
+        if (progressDiv) {
+            progressDiv.style.display = 'none';
+        }
+        
         this.updateStatus('✅ Calibración completada. Listo para comenzar la tarea');
         document.getElementById('start-task').disabled = false;
         document.getElementById('start-calibration').disabled = true;
+        
+        console.log('Calibration completed successfully!');
     }
 
     startTask() {
