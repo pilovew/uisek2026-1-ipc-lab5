@@ -122,3 +122,8 @@ El diseño del botón CTA y los elementos de navegación permiten que el usuario
 **Heurística 8:** Diseño estético y minimalista
 
 La decisión de eliminar elementos decorativos superfluos resultó efectiva. El análisis visual muestra pocas fijaciones en áreas vacías ("espacios negativos"), lo que significa que el diseño minimalista dirigió exitosamente la carga cognitiva del usuario hacia el contenido relevante (título y botón) sin distracciones.
+
+**Posibles mejoras de diseño**
+
+- Implementar una animación CSS sutil de tipo "pulso" (transform: scale y box-shadow) en el botón. El movimiento es el estímulo visual más fuerte para la visión periférica; esto reduciría el tiempo de localización visual y aumentaría la probabilidad de interacción inmediata.
+- Cambiar la disposición de elementos idénticos a una grilla asimétrica (CSS Grid). Al destacar visualmente una de las tarjetas (mediante tamaño o color de fondo invertido), se rompe la monotonía del escaneo y se fuerza al usuario a detener la vista en el contenido clave.
